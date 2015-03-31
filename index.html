@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      #logo {
+        width: 100px;
+        margin: auto;
+        position: absolute;
+        top: 0; left: 0; bottom: 0; right: 0;
+      }
+
+    </style>
+  </head>
+  <body>
+    
+    <svg id='logo' version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+         viewBox="84.3 80 31.8 40.5" enable-background="new 84.3 80 31.8 40.5" xml:space="preserve">
+      <path fill="#AOAOAO" d="M92.2,120.4l7.3-7.3v-33l-5.1,5.1v30.2H90l0,0c0,0-0.6,0-0.7-0.7V90.2l-5.1,5.1V117c0,2.7,2.3,3.5,5.1,3.5L92.2,120.4
+  L92.2,120.4z M111,80h-10.1v3.5v28.1l5.1-5.1v-5.5h5.1c0.2,0,0.3,0,0.4,0l4.6-4.6V83.5C116.1,80.8,113.8,80,111,80z M111,86.5v8.4
+  l-1.2,1.2H106V85h3.6C110.4,85,111,85.7,111,86.5z"/>
+      </svg>
+
+      <button id='monitor1'>Monitor 1</button> <button id='monitor2'>Monitor 2</button>
+
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
+    <script>
+      var socket = io();
+      $('form').submit(function(){
+        socket.emit('chat message', $('#m').val());
+        $('#m').val('');
+        return false;
+      });
+      socket.on('chat message', function(msg){
+        $('#messages').append($('<li>').text(msg));
+      });
+
+      var monitor;
+
+      $('#monitor1').on('click',function(){
+          monitor = 1;
+          $('button').hide();
+          socket.emit('monitor connect', monitor);
+
+      })
+
+      $('#monitor2').on('click',function(){
+          monitor = 2;
+          $('#logo').css('opacity',0);
+          $('button').hide();
+          socket.emit('monitor connect', monitor);
+      })
+
+      var width = $(window).width();
+
+      $(document).on('resize',function(){
+        width = $(window).width();
+      });
+
+      socket.on('animation complete', function(completeMonitor){
+        if (completeMonitor !== monitor){
+          animateL2R();
+        }
+      });
+
+      socket.on('animate Monitor 1', function(){
+        if(monitor == 1){
+          animateL2R();
+        }
+      });
+
+      socket.on('animate Monitor 2', function(){
+        if(monitor == 2){
+          animateL2R();
+        }
+      });
+
+      function animateL2R(){
+        TweenMax.fromTo('#logo', 3, {left: -width, opacity: 1},{left:width, ease:Linear.easeNone, onComplete:animationComplete} );
+      }
+
+      function animationComplete(){
+        this.monitor = monitor;
+        console.log('animation complete for ' + this.monitor);
+        socket.emit('animation complete', monitor);
+      }
+
+    </script>
+  </body>
+</html>
